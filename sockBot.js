@@ -8,12 +8,14 @@ var messages=[];
 var messageIds=[];
 var learning = false;
 var learnWord = "";
-var dictionary = ["i","he","she","they","you","we","is","am","are","happy","bot","sad","angry","amazing","what","bot","food","computer","apple","windows","a","an","the",,"how","who","why"];
-var nouns =      ["i","he","she","they","you","we","what","how","who","why"];
+var dictionary = ["i","he","she","they","you","we","is","am","are","happy","bot","sad","angry","amazing","what","bot","food","computer","apple","windows","a","an","the","too","very","how","who","why","oh","yes","no","hi","hello"];
+var pronouns =   ["i","he","she","they","you","we","what","how","who","why"];
 var verbs =      ["is","am","are"];
+var proadjs=     ["too","very"];
 var adjs  =      ["happy","bot","sad","angry","amazing"];
-var adjNouns=    ["bot","food","computer","apple","windows"];
-var helpNouns=   ["a","an","the"];
+var nouns=       ["bot","food","computer","apple","windows"];
+var articles=    ["a","an","the"];
+var expressions= ["oh","yes","no","hi","hello"];
 
 post("Restarted");
 
@@ -26,18 +28,18 @@ console.log(messageIds[0]);
 
 function AI(messageOriginal) {
   message = messageOriginal.toLowerCase();
-  message=message.replace(/[\\"\$]/g,"");
+  message=message.replace(/[\\"\$\,\.]/g,"");
   var words = message.split(" ");
   var testWord = words[0].toLowerCase();
   if(/^[@\:]/.test(words[0])) testWord = words[1].toLowerCase();
-  if(learning) {
-    var r = new RegExp("@Sock.*"+learnWord+" is "+"([a-z]+) ?","i");
+  if(learning) { //learning
+    var r = new RegExp("@Sock.*"+learnWord+" is (an? )?"+"([a-z]+) ?","i");
     if(r.test(message)) {
-      testWord = r.exec(message)[1];
+      testWord = r.exec(message)[2];
       dictionary.push(learnWord);
       switch(testWord) {
-        case "noun":
-          nouns.push(learnWord);
+        case "pronoun":
+          pronouns.push(learnWord);
           break;
         case "verb":
           verbs.push(learnWord);
@@ -45,11 +47,17 @@ function AI(messageOriginal) {
         case "adj":
           adjs.push(learnWord);
           break;
-        case "adjnoun":
-          adjNouns.push(learnWord);
+        case "noun":
+          nouns.push(learnWord);
           break;
-        case "helpnoun":
-          helpNouns.push(learnWord);
+        case "article":
+          articles.push(learnWord);
+          break;
+        case "expression":
+          expressions.push(learnWord);
+          break;
+        case "proadj":
+          proadjs.push(learnWord);
           break;
         default:
           nouns.push(learnWord);
@@ -67,18 +75,42 @@ function AI(messageOriginal) {
   }else {
     if (/what is (.*)/i.test(message)) {
       return evaluate(message.match(/what is (.*)/i)[1].toLowerCase());
-    }else{
+    }else{//random sentence generator
       var r = Math.random();
-      var stem = nouns[parseInt(Math.random()*nouns.length)]+" "+verbs[parseInt(Math.random()*verbs.length)]+" ";
+      var selectedPronoun=pronouns[parseInt(Math.random()*pronouns.length)];
+      var selectedVerb = "";
+      switch(selectedPronoun) {
+        case "i":
+          selectedVerb = "am";
+          break;
+        case "you":
+          selectedVerb = "are";
+          break;
+        case "we":
+          selectedVerb = "are";
+          break;
+        case "they":
+          selectedVerb = "are";
+          break;
+        case "he":
+          selectedVerb = "is";
+          break;
+        case "she":
+          selectedVerb = "is";
+          break;
+        default:
+          selectedVerb = verbs[parseInt(Math.random()*verbs.length)];
+      }
+      var stem = expressions[parseInt(Math.random()*expressions.length)]+", "+selectedPronoun+" "+selectedVerb+" ";
       if(r<0.5) {
-        return stem+adjs[parseInt(Math.random()*adjs.length)];
+        return stem+proadjs[parseInt(Math.random()*proadjs.length)]+" "+adjs[parseInt(Math.random()*adjs.length)];
       }else{
-        return stem+helpNouns[parseInt(Math.random()*helpNouns.length)]+" "+adjNouns[parseInt(Math.random()*adjNouns.length)];
+        return stem+articles[parseInt(Math.random()*articles.length)]+" "+nouns[parseInt(Math.random()*nouns.length)];
       }
     }
   }
 }
-
+//What is ...
 function evaluate(evalStuff) {
   if(/[a-z]/g.test(evalStuff))
     return "Nope, not evaluating that :)";
@@ -143,3 +175,10 @@ function f() {
 }
 
 setInterval(f, 500);
+
+function end() {
+localStorage.dictionary=dictionary;
+localStorage.verbs=verbs;
+localStorage.adjs=adjs;
+window.location.reload(false);
+}
