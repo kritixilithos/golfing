@@ -7,15 +7,18 @@ var commands = {};
 var messages=[];
 var messageIds=[];
 var learning = false;
+var user = "FEED";
 var learnWord = "";
-var dictionary = ["i","he","she","they","you","we","is","am","are","happy","bot","sad","angry","amazing","what","bot","food","computer","apple","windows","a","an","the","too","very","how","who","why","oh","yes","no","hi","hello"];
-var pronouns =   ["i","he","she","they","you","we","what","how","who","why"];
+var dictionary = ["i","he","she","they","you","we","is","am","are","happy","bot","sad","angry","amazing","what","bot","food","computer","apple","windows","a","an","the","too","very","how","who","why","oh","yes","no","hi","hello",,"when","where","red","green","blue"];
+var questions =  ["what","how","who","why","when","where"];
+var pronouns =   ["i","he","she","they","you","we"];
 var verbs =      ["is","am","are"];
-var proadjs=     ["too","very"];
-var adjs  =      ["happy","bot","sad","angry","amazing"];
+var proadjs=     ["too","very","quite"];
+var adjs  =      ["happy","bot","sad","angry","amazing","red","green","blue"];
 var nouns=       ["bot","food","computer","apple","windows"];
 var articles=    ["a","an","the"];
 var expressions= ["oh","yes","no","hi","hello"];
+var conjunctions=["and","but","because"];
 
 post("Restarted");
 
@@ -34,12 +37,18 @@ function AI(messageOriginal) {
   if(/^[@\:]/.test(words[0])) testWord = words[1].toLowerCase();
   if(learning) { //learning
     var r = new RegExp("@Sock.*"+learnWord+" is (an? )?"+"([a-z]+) ?","i");
-    if(r.test(message)) {
+    if(r.test(message) && /Kritixi/.test(user)) {
       testWord = r.exec(message)[2];
       dictionary.push(learnWord);
       switch(testWord) {
         case "pronoun":
           pronouns.push(learnWord);
+          break;
+        case "conjunction":
+          conjunctions.push(learnWord);
+          break;
+        case "question":
+          questions.push(learnWord);
           break;
         case "verb":
           verbs.push(learnWord);
@@ -60,7 +69,7 @@ function AI(messageOriginal) {
           proadjs.push(learnWord);
           break;
         default:
-          nouns.push(learnWord);
+          //nouns.push(learnWord);
       }
       learning = false;
       return "Learned: "+learnWord+" is a "+testWord;
@@ -68,7 +77,7 @@ function AI(messageOriginal) {
       return "I still don't know what " + learnWord + " is";
     }
   }
-  if (!dictionary.includes(testWord)) {
+  if (!dictionary.includes(testWord)&&testWord.length>=1&&!/\d/.test(testWord)) {
     learning = true;
     learnWord = testWord.toLowerCase();
     return "What is a " + testWord + "?";
@@ -169,6 +178,8 @@ function f() {
     //if (/@(?!Kritixi)/i.test(a)) return;
     if (/Sock/i.test(username)) {console.log("Kritixi posted that stop!"); return;}
     //if (a.test(/http/) return;
+    user = username;
+    if (!/Kritixi/.test(username) && learning) return;
 
     var x=":"+message_id+" "+AI(last_message);
     setTimeout(function(yup){post(x);},500,x);
