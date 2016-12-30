@@ -1,5 +1,5 @@
 /*
- * Based off of ETHproduction's bot template: https://github.com/ETHproductions/golf/blob/gh-pages/misc/ETHbot.js
+ * Based off of ETHproduction's bot template: https://github.com/ETHproductions/SE-chatbot/blob/master/ETHbot.js
  */
 function post(x) {
     document.getElementById('input').value = x;
@@ -22,11 +22,14 @@ var nouns=       ["bot","food","computer","apple","windows","ethbot","zalgo","li
 var articles=    ["a","the"];
 var expressions= ["oh","yes","no","hi","hello","nice","yeah","nope","so","ok","indeed","bye"];
 var conjunctions=["and","but","because"];
-var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions"];
+var emojis      =["xd",":P",":)"];
+var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions","emojis"];
 for(item of grammarItems){
   load(item);
 }
-dictionary=dictionary.concat(questions,pronouns,verbs,proadjs,adjs,nouns,articles,expressions);
+for(item of grammarItems){
+  eval(`dictionary=dictionary.concat(${item})`);
+}
 
 post("Restarted");
 
@@ -48,37 +51,7 @@ function AI(messageOriginal) {
     if(r.test(message) && /Kritixi/.test(user)) {
       testWord = r.exec(message)[2];
       dictionary.push(learnWord);
-      switch(testWord) {
-        case "pronoun":
-          pronouns.push(learnWord);
-          break;
-        case "conjunction":
-          conjunctions.push(learnWord);
-          break;
-        case "question":
-          questions.push(learnWord);
-          break;
-        case "verb":
-          verbs.push(learnWord);
-          break;
-        case "adj":
-          adjs.push(learnWord);
-          break;
-        case "noun":
-          nouns.push(learnWord);
-          break;
-        case "article":
-          articles.push(learnWord);
-          break;
-        case "expression":
-          expressions.push(learnWord);
-          break;
-        case "proadj":
-          proadjs.push(learnWord);
-          break;
-        default:
-          //nouns.push(learnWord);
-      }
+      eval(`${testWord}.push(${learnWord})`);
       learning = false;
       return "Learned: "+learnWord+" is a "+testWord;
     }else{
@@ -91,7 +64,7 @@ function AI(messageOriginal) {
     return "What is a " + testWord + "?";
   }else{
     if (/what is (.*)\??/i.test(message)) {
-      return evaluate(message.match(/what is (.*)/i)[1].toLowerCase());
+      return evaluate(message.match(/what is (.*)\??/i)[1].toLowerCase());
     }else{//random sentence generator
       var r = Math.random();
       var selectedPronoun= word("pronouns");
@@ -147,11 +120,16 @@ function AI(messageOriginal) {
             selectedVerb+=selectedVerb.endsWith("s")?"es":"s";
         }
       }
-      var stem = word("expressions")+", "+selectedPronoun+" "+selectedVerb+" ";
+      var stem = selectedPronoun+" "+selectedVerb+" ";
       if(r<0.5) {
-        return stem+word("proadjs")+" "+selectedAdj;
+        stem = stem+word("proadjs")+" "+selectedAdj;
       }else{
-        return stem+selectedArticle+" "+selectedNoun;
+        stem = stem+selectedArticle+" "+selectedNoun;
+      }
+      if(Math.random()<0.5) {
+        return word("expressions") + ", " + stem;
+      }else{
+        return stem + " " + word("emojis").toUpperCase();
       }
     }
   }
@@ -164,7 +142,7 @@ function word(type) {
 //What is ...
 function evaluate(evalStuff) {
   if(/[a-z]/g.test(evalStuff)) {
-    if (grammarItems.includes(evalStuff))
+    if (grammarItems.includes(evalStuff)||evalStuff=="dictionary")
       return eval(evalStuff+".join(\", \")");
     else
       return "Nope, not evaluating that :)";
