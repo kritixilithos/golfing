@@ -1,3 +1,6 @@
+/*
+ * Based off of ETHproduction's bot template: https://github.com/ETHproductions/golf/blob/gh-pages/misc/ETHbot.js
+ */
 function post(x) {
     document.getElementById('input').value = x;
     document.getElementById("sayit-button").click()
