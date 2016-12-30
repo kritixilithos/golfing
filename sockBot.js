@@ -10,6 +10,7 @@ var commands = {};
 var messages=[];
 var messageIds=[];
 var learning = false;
+var wantsToLearn = false;
 var user = "FEED";
 var learnWord = "";
 var dictionary = [];
@@ -23,7 +24,9 @@ var articles=    ["a","the"];
 var expressions= ["oh","yes","no","hi","hello","nice","yeah","nope","so","ok","indeed","bye"];
 var conjunctions=["and","but","because"];
 var emojis      =["xd",":P",":)"];
-var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions","emojis"];
+var trashs      =[];
+var propernouns =[];
+var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions","emojis","trashs","propernouns"];
 for(item of grammarItems){
   load(item);
 }
@@ -42,23 +45,24 @@ console.log(messageIds[0]);
 
 function AI(messageOriginal) {
   message = messageOriginal.toLowerCase();
-  message=message.replace(/[\,]/g,"");
+  message=message.replace(/[\,\`\"\.]/g,"");
   var words = message.split(" ");
-  var testWord = words[0].toLowerCase();
-  if(/^[@\:]/.test(words[0])) testWord = words[1].toLowerCase();
+  var wordsIndex = 0;
+  var testWord = words[wordsIndex].toLowerCase();
+  while(/^[@\:]/.test(testWord) && wordsIndex<words.length-1) testWord = words[++wordsIndex].toLowerCase();
   if(learning) { //learning
     var r = new RegExp("@Sock.*"+learnWord+" is (an? )?"+"([a-z]+) ?","i");
     if(r.test(message) && /Kritixi/.test(user)) {
       testWord = r.exec(message)[2];
       dictionary.push(learnWord);
-      eval(`${testWord}.push(${learnWord})`);
+      eval(`${testWord}s.push("${learnWord}")`);
       learning = false;
       return "Learned: "+learnWord+" is a "+testWord;
     }else{
       return "I still don't know what " + learnWord + " is";
     }
   }
-  if (!dictionary.includes(testWord)&&testWord.length>=1&&!/\d/.test(testWord)) {
+  if (!dictionary.includes(testWord)&&testWord.length>=1&&!/\d/.test(testWord) && wantsToLearn) {
     learning = true;
     learnWord = testWord.toLowerCase();
     return "What is a " + testWord + "?";
