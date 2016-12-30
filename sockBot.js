@@ -12,16 +12,21 @@ var messageIds=[];
 var learning = false;
 var user = "FEED";
 var learnWord = "";
-var dictionary = ["i","he","she","they","you","we","is","am","are","happy","bot","sad","angry","amazing","what","bot","food","computer","apple","windows","a","an","the","too","very","how","who","why","oh","yes","no","hi","hello","when","where","red","green","blue","and","but","because","nice","learn","restart","eat","does","yeah","nope","shutting","processing","nope","ethbot","zalgo","so","ok","indeed","this","that"];
+var dictionary = [];
 var questions =  ["what","how","who","why","when","where"];
 var pronouns =   ["i","he","she","they","you","we","this","that"];
 var verbs =      ["is","learn","restart","eat","shut","process"];
 var proadjs=     ["too","very","quite"];
-var adjs  =      ["happy","bot","sad","angry","amazing","red","green","blue","ok","fine"];
-var nouns=       ["bot","food","computer","apple","windows","ethbot","zalgo"];
-var articles=    ["a","an","the"];
+var adjs  =      ["happy","sad","angry","amazing","red","green","blue","fine"];
+var nouns=       ["bot","food","computer","apple","windows","ethbot","zalgo","life","earth"];
+var articles=    ["a","the"];
 var expressions= ["oh","yes","no","hi","hello","nice","yeah","nope","so","ok","indeed","bye"];
 var conjunctions=["and","but","because"];
+var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions"];
+for(item of grammarItems){
+  load(item);
+}
+dictionary=dictionary.concat(questions,pronouns,verbs,proadjs,adjs,nouns,articles,expressions);
 
 post("Restarted");
 
@@ -34,7 +39,7 @@ console.log(messageIds[0]);
 
 function AI(messageOriginal) {
   message = messageOriginal.toLowerCase();
-  message=message.replace(/[\\"\$\,\.\?\:\_\;]/g,"");
+  message=message.replace(/[\,]/g,"");
   var words = message.split(" ");
   var testWord = words[0].toLowerCase();
   if(/^[@\:]/.test(words[0])) testWord = words[1].toLowerCase();
@@ -80,19 +85,22 @@ function AI(messageOriginal) {
       return "I still don't know what " + learnWord + " is";
     }
   }
-  /*if (!dictionary.includes(testWord)&&testWord.length>=1&&!/\d/.test(testWord)) {
+  if (!dictionary.includes(testWord)&&testWord.length>=1&&!/\d/.test(testWord)) {
     learning = true;
     learnWord = testWord.toLowerCase();
     return "What is a " + testWord + "?";
-  }else */{
-    if (/what is (.*)/i.test(message)) {
+  }else{
+    if (/what is (.*)\??/i.test(message)) {
       return evaluate(message.match(/what is (.*)/i)[1].toLowerCase());
     }else{//random sentence generator
       var r = Math.random();
-      var selectedPronoun=word("pronouns");
+      var selectedPronoun= word("pronouns");
       var selectedVerb   = word("verbs");
       var selectedAdj    = word("adjs");
-      selectedAdj+=(selectedVerb=="is"?"":"ly");
+      var selectedArticle= word("articles");
+      var selectedNoun   = word("nouns");
+      selectedAdj=selectedVerb=="is"?selectedAdj:selectedAdj.replace(/(y?)$/,q=w=>w?"ily":"ly")
+      selectedArticle+=(/^[aeiou]/.test(selectedNoun)&&selectedArticle=="a"?"n":"");
       //conjugation
       if (selectedVerb == "is") {
         switch(selectedPronoun) {
@@ -143,7 +151,7 @@ function AI(messageOriginal) {
       if(r<0.5) {
         return stem+word("proadjs")+" "+selectedAdj;
       }else{
-        return stem+word("articles")+" "+word("nouns");
+        return stem+selectedArticle+" "+selectedNoun;
       }
     }
   }
@@ -155,10 +163,14 @@ function word(type) {
 
 //What is ...
 function evaluate(evalStuff) {
-  if(/[a-z]/g.test(evalStuff))
-    return "Nope, not evaluating that :)";
-  else
+  if(/[a-z]/g.test(evalStuff)) {
+    if (grammarItems.includes(evalStuff))
+      return eval(evalStuff+".join(\", \")");
+    else
+      return "Nope, not evaluating that :)";
+  }else{
     return eval(evalStuff);
+  }
 }
 
 function f() {
@@ -216,7 +228,7 @@ function f() {
     if (!/Kritixi/.test(username) && learning) return;
 
 
-    var AIed = AI(last_message);
+    var AIed = AI(last_message)+"";
     AIed = AIed.replace(/^(.)/,q=w=>w.toUpperCase()).replace(/ i /g," I ");
     var x=":"+message_id+" "+AIed;
     setTimeout(function(yup){post(x);},500,x);
@@ -225,8 +237,17 @@ function f() {
 setInterval(f, 500);
 
 function end() {
-localStorage.dictionary=dictionary;
-localStorage.verbs=verbs;
-localStorage.adjs=adjs;
-window.location.reload(false);
+  for(item of grammarItems) {
+    save(item);
+  }
+  post("Sock is out");
+  window.location.reload(false);
+}
+
+function save(item) {
+  eval(`localStorage.setItem("${item}",JSON.stringify(${item}));`);
+}
+
+function load(item) {
+  eval(`if(localStorage.hasOwnProperty("${item}"))${item}=JSON.parse(localStorage.getItem("${item}"));`);
 }
