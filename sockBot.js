@@ -28,12 +28,7 @@ var trashs      =[];
 var propernouns =[];
 var variables   ={pi:Math.PI};
 var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions","emojis","trashs","propernouns","variables"];
-for(item of grammarItems){
-  load(item);
-}
-for(item of grammarItems){
-  eval(`dictionary=dictionary.concat(${item})`);
-}
+loadAll();
 
 post("Restarted");
 
@@ -46,7 +41,7 @@ console.log(messageIds[0]);
 
 function AI(messageOriginal) {
   message = messageOriginal.toLowerCase();
-  message=message.replace(/[\,\`\"\.]/g,"");
+  message=message.replace(/[\,\`]/g,"");
   var words = message.split(" ");
   var wordsIndex = 0;
   var testWord = words[wordsIndex].toLowerCase();
@@ -68,12 +63,24 @@ function AI(messageOriginal) {
     learnWord = testWord.toLowerCase();
     return "What is a? ?" + testWord + "?";
   }else{
-    if (/what is (.*)\??/i.test(message)) {
-      return evaluate(message.match(/what is ([^\?]*)\??/i)[1].toLowerCase());
-    }else if(/(.*) is (.*)/i.test(message)) {
-      var matches = message.match(/(.*) is (.*)/i);
-      eval(`variables.${matches[1]}="${matches[2]}"`);
+    //amazing stuff
+    if (/what is (.*)\??/i.test(message)) {//evaluating
+      return evaluate(message.match(/what is ([^\?]*)\??/i)[1].toLowerCase()); 
+    }else if(/(.*) is (.*)/i.test(message)) {//storing vars
+      var matches = message.match(/([^ ]*) is (.*)/i);
+      eval(`variables.${matches[1]}=${matches[2]}`);
       return `Learned variable: ${matches[1]} = ${matches[2]}`;
+    }else if(/delete (.*)/i.test(message)) {
+      var match = message.match(/delete (.*)/i)[1];
+      if (variables.hasOwnProperty(match))
+        eval(`delete variables.${match}`);
+      return `deleted ${match}`;
+    }else if(message==="load"&&/Kritixi/i.test(user)) {
+      loadAll();
+      return "Loaded from last save";
+    }else if(message==="save"&&/Kritixi/i.test(user)) {
+      saveAll();
+      return "Saved";
     }else{//random sentence generator
       return generateRandomSentence();
     }
@@ -155,19 +162,36 @@ function word(type) {
 
 //What is ...
 function evaluate(evalStuff) {
-  if(/[a-z]/g.test(evalStuff)) {
-    if (grammarItems.includes(evalStuff)||evalStuff=="dictionary") {
-      return eval(evalStuff+".join(\", \")");
-    }else{
-      if(variables.hasOwnProperty(`${evalStuff}`)) {
-        return eval(`variables.${evalStuff}`);
-      }else{
-        return "Nope, not evaluating that :)";
-      }
+  if ((grammarItems.includes(evalStuff)||evalStuff=="dictionary")&&evalStuff!=="variables") {
+    return eval(evalStuff+".join(\", \")");
+  }else if(evalStuff=="variables") {
+    var output = "";
+    for(key in variables) {
+      output += key+", ";
     }
+    return output;
   }else{
-    return eval(evalStuff);
+    var output = "";
+    try {
+      //replace variableName with variables.variableName
+      output = eval(evalStuff.replace(/([a-zA-Z_]+)/g,"variables.$1"))+"";
+    }catch(e){
+      return "No can do, Sir!";
+    }
+    console.log(output);
+    if(output=="undefined")
+      return "No can do, Sir!";
+    else
+      return output;
   }
+}
+
+//adding "" around string, nothing for ints
+function displayAsType(text) {
+  if (typeof(text)=="string")
+    return "\""+text+"\"";
+  else
+    return text;
 }
 
 function f() {
@@ -234,9 +258,7 @@ function f() {
 setInterval(f, 500);
 
 function end() {
-  for(item of grammarItems) {
-    save(item);
-  }
+  saveAll();
   post("Sock is out");
   window.location.reload(false);
 }
@@ -247,4 +269,19 @@ function save(item) {
 
 function load(item) {
   eval(`if(localStorage.hasOwnProperty("${item}"))${item}=JSON.parse(localStorage.getItem("${item}"));`);
+}
+
+function saveAll() {
+  for(item of grammarItems) {
+    save(item);
+  }
+}
+
+function loadAll() {
+  for(item of grammarItems){
+    load(item);
+  }
+  for(item of grammarItems){
+    eval(`dictionary=dictionary.concat(${item})`);
+  }
 }
