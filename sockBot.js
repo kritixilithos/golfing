@@ -26,7 +26,8 @@ var conjunctions=["and","but","because"];
 var emojis      =["xd",":P",":)"];
 var trashs      =[];
 var propernouns =[];
-var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions","emojis","trashs","propernouns"];
+var variables   ={pi:Math.PI};
+var grammarItems=["questions","pronouns","verbs","proadjs","adjs","nouns","articles","expressions","conjunctions","emojis","trashs","propernouns","variables"];
 for(item of grammarItems){
   load(item);
 }
@@ -65,12 +66,22 @@ function AI(messageOriginal) {
   if (!dictionary.includes(testWord)&&testWord.length>=1&&!/\d/.test(testWord) && wantsToLearn) {
     learning = true;
     learnWord = testWord.toLowerCase();
-    return "What is a " + testWord + "?";
+    return "What is a? ?" + testWord + "?";
   }else{
     if (/what is (.*)\??/i.test(message)) {
-      return evaluate(message.match(/what is (.*)\??/i)[1].toLowerCase());
+      return evaluate(message.match(/what is ([^\?]*)\??/i)[1].toLowerCase());
+    }else if(/(.*) is (.*)/i.test(message)) {
+      var matches = message.match(/(.*) is (.*)/i);
+      eval(`variables.${matches[1]}="${matches[2]}"`);
+      return `Learned variable: ${matches[1]} = ${matches[2]}`;
     }else{//random sentence generator
-      var r = Math.random();
+      return generateRandomSentence();
+    }
+  }
+}
+
+//generate random sentence
+function generateRandomSentence() {
       var selectedPronoun= word("pronouns");
       var selectedVerb   = word("verbs");
       var selectedAdj    = word("adjs");
@@ -125,7 +136,7 @@ function AI(messageOriginal) {
         }
       }
       var stem = selectedPronoun+" "+selectedVerb+" ";
-      if(r<0.5) {
+      if(Math.random()<0.5) {
         stem = stem+word("proadjs")+" "+selectedAdj;
       }else{
         stem = stem+selectedArticle+" "+selectedNoun;
@@ -135,9 +146,8 @@ function AI(messageOriginal) {
       }else{
         return stem + " " + word("emojis").toUpperCase();
       }
-    }
-  }
 }
+
 //return word for grammar
 function word(type) {
   return eval(`${type}[parseInt(Math.random()*${type}.length)]`);
@@ -146,10 +156,15 @@ function word(type) {
 //What is ...
 function evaluate(evalStuff) {
   if(/[a-z]/g.test(evalStuff)) {
-    if (grammarItems.includes(evalStuff)||evalStuff=="dictionary")
+    if (grammarItems.includes(evalStuff)||evalStuff=="dictionary") {
       return eval(evalStuff+".join(\", \")");
-    else
-      return "Nope, not evaluating that :)";
+    }else{
+      if(variables.hasOwnProperty(`${evalStuff}`)) {
+        return eval(`variables.${evalStuff}`);
+      }else{
+        return "Nope, not evaluating that :)";
+      }
+    }
   }else{
     return eval(evalStuff);
   }
